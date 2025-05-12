@@ -7,3 +7,4 @@ oauth2client
 google-auth
 matplotlib
 google-auth-oauthlib
+openpyxl
