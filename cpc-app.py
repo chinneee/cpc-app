@@ -1,4 +1,3 @@
-# streamlit_app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,17 +5,19 @@ import gspread
 from gspread_dataframe import set_with_dataframe
 from google.oauth2.service_account import Credentials
 from datetime import datetime
+import json
+import tempfile
 
-# --- Google Sheets Setup ---
+# --- Google Sheets Setup (for read only) ---
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-CREDS_PATH = Credentials.from_service_account_info(
-    info=st.secrets["google_service_account"],
-    scopes=["https://www.googleapis.com/auth/spreadsheets"]
-)
 SHEET_ID = "1vaKOc9re-xBwVhJ3oOOGtjmGVembMsAUq93krQo0mpc"
 
-creds = Credentials.from_service_account_file(CREDS_PATH, scopes=SCOPES)
-client = gspread.authorize(creds)
+# Read-only credentials (for loading data only)
+read_creds = Credentials.from_service_account_info(
+    info=st.secrets["google_service_account"],
+    scopes=SCOPES
+)
+read_client = gspread.authorize(read_creds)
 
 # --- UI ---
 st.set_page_config(page_title="CPC Dashboard", layout="wide")
@@ -26,7 +27,7 @@ mode = st.sidebar.radio("Select Dataset", ["CPC Launching", "CPC Daily"])
 
 @st.cache_data(show_spinner=False)
 def load_data(worksheet_name):
-    sheet = client.open_by_key(SHEET_ID).worksheet(worksheet_name)
+    sheet = read_client.open_by_key(SHEET_ID).worksheet(worksheet_name)
     data = sheet.get_all_values()
     df = pd.DataFrame(data[1:], columns=data[0])
     return df
@@ -58,6 +59,7 @@ def preprocess_daily(df):
     df_pivot = df_pivot[['Year', 'Keyword', 'auto', 'b,p', 'ex']]
     return df_pivot
 
+# Load data & preprocess
 if mode == "CPC Launching":
     df_raw = load_data("LAUNCHING TH")
     df_result = preprocess_launching(df_raw)
@@ -69,11 +71,31 @@ else:
 
 st.dataframe(df_result, use_container_width=True)
 
-# Optional: Export button
+# --- Export to Google Sheet ---
+st.markdown("### 📤 Export Section")
+
+uploaded_file = st.file_uploader("Upload your Google Service Account JSON to export", type="json")
+
 if st.button("📤 Export to Google Sheet"):
-    if mode == "CPC Launching":
-        sheet = client.open_by_key(SHEET_ID).worksheet("CPC LAUNCHING TH")
+    if not uploaded_file:
+        st.warning("⚠️ Please upload a service account JSON file first.")
     else:
-        sheet = client.open_by_key(SHEET_ID).worksheet("CPC HELIUM")
-    set_with_dataframe(sheet, df_result, row=2, col=1)
-    st.success("Exported to Google Sheet successfully!")
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmp_file:
+                tmp_file.write(uploaded_file.getvalue())
+                tmp_file_path = tmp_file.name
+
+            # Create credentials from uploaded JSON
+            user_creds = Credentials.from_service_account_file(tmp_file_path, scopes=SCOPES)
+            user_client = gspread.authorize(user_creds)
+
+            if mode == "CPC Launching":
+                sheet = user_client.open_by_key(SHEET_ID).worksheet("CPC LAUNCHING TH")
+            else:
+                sheet = user_client.open_by_key(SHEET_ID).worksheet("CPC HELIUM")
+
+            set_with_dataframe(sheet, df_result, row=2, col=1)
+            st.success("✅ Exported to Google Sheet successfully!")
+
+        except Exception as e:
+            st.error(f"❌ Failed to export: {e}")
