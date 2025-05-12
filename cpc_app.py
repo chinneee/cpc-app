@@ -1,13 +1,15 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import gspread
-from gspread_dataframe import set_with_dataframe
-from google.oauth2.service_account import Credentials
-from datetime import datetime
-import tempfile
+def cpc_dashboard_app(mode):
+    import streamlit as st
+    import pandas as pd
+    import numpy as np
+    import gspread
+    from gspread_dataframe import set_with_dataframe
+    from google.oauth2.service_account import Credentials
+    from datetime import datetime
+    import json
+    import tempfile
 
-def cpc_dashboard_app():
+    # --- Google Sheets Setup ---
     SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
     SHEET_ID = "1vaKOc9re-xBwVhJ3oOOGtjmGVembMsAUq93krQo0mpc"
 
@@ -17,16 +19,12 @@ def cpc_dashboard_app():
     )
     read_client = gspread.authorize(read_creds)
 
-    st.set_page_config(page_title="CPC Dashboard", layout="wide")
-    st.title("🧮 CPC Average Calculator")
-
-    mode = st.sidebar.radio("Select Dataset", ["CPC Launching", "CPC Daily"])
-
     @st.cache_data(show_spinner=False)
     def load_data(worksheet_name):
         sheet = read_client.open_by_key(SHEET_ID).worksheet(worksheet_name)
         data = sheet.get_all_values()
-        return pd.DataFrame(data[1:], columns=data[0])
+        df = pd.DataFrame(data[1:], columns=data[0])
+        return df
 
     @st.cache_data(show_spinner=False)
     def preprocess_launching(df):
@@ -37,10 +35,12 @@ def cpc_dashboard_app():
         df['Start date'] = pd.to_datetime(df['Start date'], format='%d/%m/%Y', errors='coerce')
         df['CPC(USD)'] = df['CPC(USD)'].replace({r'\$': '', ',': '.'}, regex=True).replace('', '0').astype(float)
         df['Year'] = df['Start date'].dt.year
+        df['Month'] = df['Start date'].dt.month
         df_grouped = df.groupby(['Year', 'Keyword', 'Match_Type'])['CPC(USD)'].mean().reset_index()
         df_pivot = df_grouped.pivot_table(index=['Year', 'Keyword'], columns='Match_Type', values='CPC(USD)', aggfunc='mean').reset_index()
         df_pivot.columns.name = None
-        return df_pivot[['Year', 'Keyword', 'auto', 'b,p', 'ex']]
+        df_pivot = df_pivot[['Year', 'Keyword', 'auto', 'b,p', 'ex']]
+        return df_pivot
 
     @st.cache_data(show_spinner=False)
     def preprocess_daily(df):
@@ -50,8 +50,10 @@ def cpc_dashboard_app():
         df_grouped = df.groupby(['Year', 'Keyword', 'Type'])['CPC'].mean().reset_index()
         df_pivot = df_grouped.pivot_table(index=['Year', 'Keyword'], columns='Type', values='CPC', aggfunc='mean').reset_index()
         df_pivot.columns.name = None
-        return df_pivot[['Year', 'Keyword', 'auto', 'b,p', 'ex']]
+        df_pivot = df_pivot[['Year', 'Keyword', 'auto', 'b,p', 'ex']]
+        return df_pivot
 
+    # Xử lý theo chế độ
     if mode == "CPC Launching":
         df_raw = load_data("LAUNCHING TH")
         df_result = preprocess_launching(df_raw)
@@ -63,6 +65,7 @@ def cpc_dashboard_app():
 
     st.dataframe(df_result, use_container_width=True)
 
+    # Export
     st.markdown("### 📤 Export Section")
     uploaded_file = st.file_uploader("Upload your Google Service Account JSON to export", type="json")
 
@@ -78,7 +81,11 @@ def cpc_dashboard_app():
                 user_creds = Credentials.from_service_account_file(tmp_file_path, scopes=SCOPES)
                 user_client = gspread.authorize(user_creds)
 
-                sheet = user_client.open_by_key(SHEET_ID).worksheet("CPC LAUNCHING TH" if mode == "CPC Launching" else "CPC HELIUM")
+                if mode == "CPC Launching":
+                    sheet = user_client.open_by_key(SHEET_ID).worksheet("CPC LAUNCHING TH")
+                else:
+                    sheet = user_client.open_by_key(SHEET_ID).worksheet("CPC HELIUM")
+
                 set_with_dataframe(sheet, df_result, row=2, col=1)
                 st.success("✅ Exported to Google Sheet successfully!")
             except Exception as e:
