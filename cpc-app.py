@@ -9,7 +9,10 @@ from datetime import datetime
 
 # --- Google Sheets Setup ---
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-CREDS_PATH = "new_credential.json"  # adjust path as needed
+CREDS_PATH = Credentials.from_service_account_info(
+    info=st.secrets["google_service_account"],
+    scopes=["https://www.googleapis.com/auth/spreadsheets"]
+)
 SHEET_ID = "1vaKOc9re-xBwVhJ3oOOGtjmGVembMsAUq93krQo0mpc"
 
 creds = Credentials.from_service_account_file(CREDS_PATH, scopes=SCOPES)
