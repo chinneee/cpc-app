@@ -16,6 +16,3 @@ elif main_option == "CPC Launching & Daily":
     # Menu phụ trong CPC
     sub_option = st.sidebar.radio("Chọn loại CPC:", ["CPC Launching", "CPC Daily"])
     cpc_dashboard_app(mode=sub_option)
-
-
-
