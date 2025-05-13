@@ -6,6 +6,7 @@ def cpc_dashboard_app(mode):
     from gspread_dataframe import set_with_dataframe
     from google.oauth2.service_account import Credentials
     from datetime import datetime
+    import json
     import tempfile
 
     # --- Google Sheets Setup ---
@@ -29,47 +30,37 @@ def cpc_dashboard_app(mode):
     def preprocess_launching(df):
         df = df.copy()
         df['Keyword'] = df['Keyword'].apply(lambda x: 'all key' if x.startswith('all key') else x)
-        df = df[~df['Keyword'].str.contains('all key', case=False, na=False)]
-        df = df[df['Keyword'].notna() & ~df['Keyword'].str.strip().eq('')]
+        df = df[~df['Keyword'].str.startswith('all key')]
+        df = df[~df['Keyword'].isna() & ~df['Keyword'].str.strip().eq('')]
         df['Start date'] = pd.to_datetime(df['Start date'], format='%d/%m/%Y', errors='coerce')
         df['CPC(USD)'] = df['CPC(USD)'].replace({r'\$': '', ',': '.'}, regex=True).replace('', '0').astype(float)
         df['Year'] = df['Start date'].dt.year
-
+        df['Month'] = df['Start date'].dt.month
         df_grouped = df.groupby(['Year', 'Keyword', 'Match_Type'])['CPC(USD)'].mean().reset_index()
         df_pivot = df_grouped.pivot_table(index=['Year', 'Keyword'], columns='Match_Type', values='CPC(USD)', aggfunc='mean').reset_index()
         df_pivot.columns.name = None
-
-        # Chỉ giữ các cột tồn tại
-        expected_cols = ['auto', 'b,p', 'ex']
-        existing_cols = [col for col in expected_cols if col in df_pivot.columns]
-        final_cols = ['Year', 'Keyword'] + existing_cols
-        return df_pivot[final_cols]
+        df_pivot = df_pivot[['Year', 'Keyword', 'auto', 'b,p', 'ex']]
+        return df_pivot
 
     @st.cache_data(show_spinner=False)
     def preprocess_daily(df):
         df = df.copy()
         df['CPC'] = df['CPC'].replace({r'\$': '', ',': '.'}, regex=True).replace('', '0').astype(float)
         df = df[~df['Keyword'].str.contains('all key', case=False, na=False)]
-        df = df[df['Keyword'].notna() & ~df['Keyword'].str.strip().eq('')]
-        df['Year'] = df['Date'].apply(lambda x: pd.to_datetime(x, errors='coerce').year if pd.notna(x) else None)
-
         df_grouped = df.groupby(['Year', 'Keyword', 'Type'])['CPC'].mean().reset_index()
         df_pivot = df_grouped.pivot_table(index=['Year', 'Keyword'], columns='Type', values='CPC', aggfunc='mean').reset_index()
         df_pivot.columns.name = None
+        df_pivot = df_pivot[['Year', 'Keyword', 'auto', 'b,p', 'ex']]
+        return df_pivot
 
-        # Chỉ giữ các cột tồn tại
-        expected_cols = ['auto', 'b,p', 'ex']
-        existing_cols = [col for col in expected_cols if col in df_pivot.columns]
-        final_cols = ['Year', 'Keyword'] + existing_cols
-        return df_pivot[final_cols]
+    # --- Add Title ---
+    st.title("Aggregate CPC By Year")  # Đây là tiêu đề mới của bạn
 
-    # --- Giao diện ---
-    st.title("📊 CPC Aggregation Dashboard")
-
+    # Xử lý theo chế độ
     if mode == "CPC Launching":
         df_raw = load_data("LAUNCHING TH")
         df_result = preprocess_launching(df_raw)
-        st.subheader("🚀 CPC Launching Data")
+        st.subheader("📊 CPC Launching Data")
     else:
         df_raw = load_data("HELIUM TH")
         df_result = preprocess_daily(df_raw)
@@ -77,7 +68,7 @@ def cpc_dashboard_app(mode):
 
     st.dataframe(df_result, use_container_width=True)
 
-    # Export section
+    # Export
     st.markdown("### 📤 Export Section")
     uploaded_file = st.file_uploader("Upload your Google Service Account JSON to export", type="json")
 
@@ -87,14 +78,16 @@ def cpc_dashboard_app(mode):
         else:
             try:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmp_file:
-                    tmp_file.write(uploaded_file.read())  # Đọc đúng cách
+                    tmp_file.write(uploaded_file.getvalue())
                     tmp_file_path = tmp_file.name
 
                 user_creds = Credentials.from_service_account_file(tmp_file_path, scopes=SCOPES)
                 user_client = gspread.authorize(user_creds)
 
-                sheet_name = "CPC LAUNCHING TH" if mode == "CPC Launching" else "CPC HELIUM"
-                sheet = user_client.open_by_key(SHEET_ID).worksheet(sheet_name)
+                if mode == "CPC Launching":
+                    sheet = user_client.open_by_key(SHEET_ID).worksheet("CPC LAUNCHING TH")
+                else:
+                    sheet = user_client.open_by_key(SHEET_ID).worksheet("CPC HELIUM")
 
                 set_with_dataframe(sheet, df_result, row=2, col=1)
                 st.success("✅ Exported to Google Sheet successfully!")
