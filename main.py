@@ -13,6 +13,11 @@ if main_option == "Daily Tracking":
     daily_tracking_app()
 
 elif main_option == "CPC Launching & Daily":
-    # Menu phụ trong CPC
-    sub_option = st.sidebar.radio("Chọn loại CPC:", ["CPC Launching", "CPC Daily"])
-    cpc_dashboard_app(mode=sub_option)
+    sub_option = st.sidebar.radio("Chọn loại CPC:", ["CPC Launching", "CPC Daily", "Estimate CPC Launching"])
+    
+    if sub_option in ["CPC Launching", "CPC Daily"]:
+        cpc_dashboard_app(mode=sub_option)
+    else:
+        from cpc_app import estimate_cpc_launching_app
+        estimate_cpc_launching_app()
+
