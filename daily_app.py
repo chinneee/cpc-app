@@ -57,12 +57,6 @@ def daily_tracking_app():
                 if uploaded_cred:
                     cred_dict = json.loads(uploaded_cred.read())
 
-                    # Lấy ngày từ dữ liệu
-                    start_date = merged_df['Date'].min().strftime('%Y/%m/%d')
-                    end_date = merged_df['Date'].max().strftime('%Y/%m/%d')
-                    st.write("🗓️ **Start Date:**", start_date)
-                    st.write("🗓️ **End Date:**", end_date)
-
                     # Kết nối Google Sheets và lấy dòng bắt đầu
                     try:
                         scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
