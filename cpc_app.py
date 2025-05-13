@@ -55,8 +55,7 @@ def cpc_dashboard_app(mode):
         return df_pivot
 
     # --- Add Title ---
-    st.title("Aggregate CPC By Year")  # Đây là tiêu đề mới của bạn
-
+    st.title("Aggregate CPC By Year")
     # Xử lý theo chế độ
     if mode == "CPC Launching":
         df_raw = load_data("LAUNCHING TH")
