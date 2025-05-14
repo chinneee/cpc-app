@@ -15,8 +15,11 @@ def add_date_column(df, date_str):
 def load_and_clean_reports(br_file, ads_file, date_str):
     br = pd.read_csv(br_file)[['(Parent) ASIN', '(Child) ASIN', 'Sessions - Total', 'Units Ordered']]
     br.columns = ['Parent_ASIN', 'Child_ASIN', 'Sessions', 'Units_Ordered']
-    br['Sessions'] = br['Sessions'].str.replace(',', '').astype(int)
-    br['Units_Ordered'] = br['Units_Ordered'].str.replace(',', '').astype(int)
+
+    # Làm sạch dữ liệu số: bỏ dấu phẩy và ép kiểu int
+    br['Sessions'] = br['Sessions'].astype(str).str.replace(',', '').astype(int)
+    br['Units_Ordered'] = br['Units_Ordered'].astype(str).str.replace(',', '').astype(int)
+
     br = add_date_column(br, date_str)
 
     ads = pd.read_csv(ads_file)[['Products', 'Clicks', 'Spend(USD)']]
@@ -25,6 +28,11 @@ def load_and_clean_reports(br_file, ads_file, date_str):
     ads = add_date_column(ads, date_str)
 
     merged = pd.merge(br, ads, on=["Child_ASIN", "Date"], how="left").fillna(0)
+
+    # Nếu Clicks_Ads hoặc Spend_Ads là float bị NaN, ép lại kiểu
+    merged["Clicks_Ads"] = merged["Clicks_Ads"].astype(int)
+    merged["Spend_Ads"] = merged["Spend_Ads"].astype(float)
+
     merged["Date"] = merged.pop("Date")
     return merged
 
