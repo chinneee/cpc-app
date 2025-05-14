@@ -5,14 +5,16 @@ from cpc_app import cpc_dashboard_app
 # Cấu hình giao diện
 st.set_page_config(page_title="📈 Data Integration Application", layout="wide")
 
-# Menu chính
-st.sidebar.title("📌 Menu")
-main_option = st.sidebar.radio("Chọn công cụ:", ["Daily Tracking", "CPC Launching & Daily"])
+# Giao diện sidebar
+st.sidebar.title("📌 Công cụ tổng hợp dữ liệu")
+main_option = st.sidebar.radio("Chọn chức năng chính:", ["🗓️ Daily Tracking", "📊 CPC Tools"])
 
-if main_option == "Daily Tracking":
+# Xử lý lựa chọn menu
+if main_option == "🗓️ Daily Tracking":
+    st.title("🗓️ Daily Tracking Report")
     daily_tracking_app()
 
-elif main_option == "CPC Launching & Daily":
-    # Menu phụ trong CPC
-    sub_option = st.sidebar.radio("Chọn loại CPC:", ["CPC Launching", "CPC Daily"])
+elif main_option == "📊 CPC Tools":
+    st.title("📊 CPC Launching & Daily Analysis")
+    sub_option = st.sidebar.radio("Chọn chế độ phân tích CPC:", ["CPC Launching", "CPC Daily"])
     cpc_dashboard_app(mode=sub_option)
