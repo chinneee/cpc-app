@@ -15,6 +15,8 @@ def add_date_column(df, date_str):
 def load_and_clean_reports(br_file, ads_file, date_str):
     br = pd.read_csv(br_file)[['(Parent) ASIN', '(Child) ASIN', 'Sessions - Total', 'Units Ordered']]
     br.columns = ['Parent_ASIN', 'Child_ASIN', 'Sessions', 'Units_Ordered']
+    br['Sessions'] = br['Sessions'].str.replace(',', '').astype(int)
+    br['Units_Ordered'] = br['Units_Ordered'].str.replace(',', '').astype(int)
     br = add_date_column(br, date_str)
 
     ads = pd.read_csv(ads_file)[['Products', 'Clicks', 'Spend(USD)']]
