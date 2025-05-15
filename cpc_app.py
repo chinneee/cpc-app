@@ -44,6 +44,7 @@ def cpc_dashboard_app(mode):
         df = df.copy()
         df['CPC'] = df['CPC'].replace({r'\$': '', ',': '.'}, regex=True).replace('', '0').astype(float)
         df = df[~df['Keyword'].str.contains('all key', case=False, na=False)]
+        df = df[~df['Keyword'].isna() & ~df['Keyword'].str.strip().eq('')]
         df_grouped = df.groupby(['Year', 'Keyword', 'Type'])['CPC'].mean().reset_index()
         df_pivot = df_grouped.pivot_table(index=['Year', 'Keyword'], columns='Type', values='CPC', aggfunc='mean').reset_index()
         df_pivot.columns.name = None

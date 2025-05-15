@@ -3,7 +3,7 @@ from daily_app import daily_tracking_app
 from cpc_app import cpc_dashboard_app
 
 # Cấu hình giao diện
-st.set_page_config(page_title="📈 Data Integration Application", layout="wide")
+st.set_page_config(page_title="Data Integration Application", layout="wide")
 
 # Giao diện sidebar
 st.sidebar.title("📌 Công cụ tổng hợp dữ liệu")
