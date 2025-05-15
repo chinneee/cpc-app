@@ -97,25 +97,29 @@ def cpc_dashboard_app(mode):
         st.dataframe(pivot_df, use_container_width=True)
 
         # 🔄 Tạo bảng 2024 từ dữ liệu 2024 + 2023, ưu tiên 2024
-        def get_most_recent_rows(df, label):
+        def get_most_recent_rows(df):
             df_24 = df[df['Year'].isin([2023, 2024])].copy()
             df_24.sort_values(by='Year', ascending=False, inplace=True)
             return df_24.drop_duplicates('Keyword', keep='first')
 
-        df_2024_launch = get_most_recent_rows(df_launch, 'Lau')
-        df_2024_daily = get_most_recent_rows(df_daily, 'Dail')
+        df_2024_launch = get_most_recent_rows(df_launch)
+        df_2024_daily = get_most_recent_rows(df_daily)
 
         # 👉 Tạo bảng 2025 launching
         df_2025_launch = df_2024_launch.copy()
         for mt in ['auto', 'b,p', 'ex']:
-            df_2025_launch[mt] = df_2025_launch[mt] * pivot_df.loc[pivot_df['Match Type'] == mt, 'CPC_Launching_Ratio_25_vs_24'].values[0]
+            ratio = pivot_df.loc[pivot_df['Match Type'] == mt, 'CPC_Launching_Ratio_25_vs_24']
+            if not ratio.empty:
+                df_2025_launch[mt] = df_2025_launch[mt] * ratio.values[0]
         df_2025_launch['Year'] = 2025
 
         # 👉 Tạo bảng 2025 daily
         df_2025_daily = df_2024_daily.copy()
         for mt in ['auto', 'b,p', 'ex']:
-            df_2025_daily[mt] = df_2025_daily[mt] * pivot_df.loc[pivot_df['Match Type'] == mt, 'CPC_Daily_Ratio_25_vs_24'].values[0]
-            df_2025_daily[mt] = df_2025_daily[mt] * pivot_df.loc[pivot_df['Match Type'] == mt, 'Launch_vs_Daily_2025'].values[0]
+            daily_ratio = pivot_df.loc[pivot_df['Match Type'] == mt, 'CPC_Daily_Ratio_25_vs_24']
+            launch_vs_daily_ratio = pivot_df.loc[pivot_df['Match Type'] == mt, 'Launch_vs_Daily_2025']
+            if not daily_ratio.empty and not launch_vs_daily_ratio.empty:
+                df_2025_daily[mt] = df_2025_daily[mt] * daily_ratio.values[0] * launch_vs_daily_ratio.values[0]
         df_2025_daily['Year'] = 2025
 
         # Kết hợp bảng 2025
@@ -134,7 +138,6 @@ def cpc_dashboard_app(mode):
 
         st.subheader("📊 Estimated CPC Launching 2025")
         st.dataframe(df_2025, use_container_width=True)
-
 
         # Export
         uploaded_file = st.file_uploader("Upload Google Service JSON để export bảng 2025", type="json", key="est_export")
