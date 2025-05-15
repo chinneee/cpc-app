@@ -61,7 +61,14 @@ def cpc_dashboard_app(mode):
 
         # Tính CPC trung bình theo Match Type và Year
         def get_avg_cpc(df, label):
-            df_avg = df.groupby('Year')[['auto', 'b,p', 'ex']].mean().reset_index()
+            # Gộp dữ liệu 2023 + 2024 thành 1 mốc để tính trung bình
+            df_temp = df[df['Year'].isin([2023, 2024])].copy()
+            df_temp['Year'] = 2024  # gán tạm cho mục đích nhóm
+            df_future = df[df['Year'] == 2025].copy()
+
+            df_combined = pd.concat([df_temp, df_future], ignore_index=True)
+
+            df_avg = df_combined.groupby('Year')[['auto', 'b,p', 'ex']].mean().reset_index()
             df_avg = df_avg[df_avg['Year'].isin([2024, 2025])]
             df_avg = df_avg.melt(id_vars='Year', var_name='Match Type', value_name=f'Avg CPC {label}')
             return df_avg
