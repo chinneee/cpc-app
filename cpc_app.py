@@ -61,22 +61,30 @@ def cpc_dashboard_app(mode):
 
         # Tính CPC trung bình theo Match Type và Year
         def get_avg_cpc(df, label):
-            # Gộp dữ liệu 2023 + 2024 thành 1 mốc để tính trung bình
-            df_temp = df[df['Year'].isin([2023, 2024])].copy()
-            df_temp['Year'] = 2024  # gán tạm cho mục đích nhóm
-            df_future = df[df['Year'] == 2025].copy()
+            # Lấy dữ liệu của năm 2023 và 2024 → gộp lại thành một mốc, đặt nhãn là 2024
+            df_hist = df[df['Year'].isin([2023, 2024])].copy()
+            df_hist['Year_Grouped'] = 2024
 
-            df_combined = pd.concat([df_temp, df_future], ignore_index=True)
+            # Dữ liệu của năm 2025 giữ nguyên
+            df_2025 = df[df['Year'] == 2025].copy()
+            df_2025['Year_Grouped'] = 2025
 
-            df_avg = df_combined.groupby('Year')[['auto', 'b,p', 'ex']].mean().reset_index()
-            df_avg = df_avg[df_avg['Year'].isin([2024, 2025])]
+            # Gộp lại để tính trung bình
+            df_combined = pd.concat([df_hist, df_2025], ignore_index=True)
+
+            df_avg = df_combined.groupby('Year_Grouped')[['auto', 'b,p', 'ex']].mean().reset_index()
+            df_avg = df_avg.rename(columns={'Year_Grouped': 'Year'})
+
             df_avg = df_avg.melt(id_vars='Year', var_name='Match Type', value_name=f'Avg CPC {label}')
             return df_avg
 
+        # Gọi hàm tính trung bình
         avg_launch = get_avg_cpc(df_launch, 'Lau')
         avg_daily = get_avg_cpc(df_daily, 'Dail')
 
+        # Merge và pivot
         df_merge = pd.merge(avg_launch, avg_daily, on=['Year', 'Match Type'])
+
         pivot_df = df_merge.pivot(index='Match Type', columns='Year')
         pivot_df.columns = ['_'.join([col[0], str(col[1])]) for col in pivot_df.columns]
         pivot_df.reset_index(inplace=True)
