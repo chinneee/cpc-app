@@ -43,7 +43,8 @@ def load_full_gsheet_data(sheet_id, credential_json, worksheet_name):
     worksheet = client.open_by_key(sheet_id).worksheet(worksheet_name)
     data = worksheet.get_all_records()
     df = pd.DataFrame(data)
-    df['Date'] = pd.to_datetime(df['Date'])
+    # Date is day/month/year format
+    df['Date'] = pd.to_datetime(df['Date'], format='%d/%m/%Y', errors='coerce')
     df['Sessions'] = df['Sessions'].astype(int)
     df['Units_Ordered'] = df['Units_Ordered'].astype(int)
     df['Clicks_Ads'] = df['Clicks_Ads'].astype(int)
