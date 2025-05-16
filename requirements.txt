@@ -8,3 +8,4 @@ google-auth
 matplotlib
 google-auth-oauthlib
 openpyxl
+altair
