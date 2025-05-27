@@ -1,7 +1,7 @@
 import streamlit as st
 from daily_app import daily_tracking_app
 from cpc_app import cpc_dashboard_app
-from asins_app import asin_launching_app  # 👈 Import mới
+from asins_app import asins_launching_app  # 👈 Import mới
 
 # Cấu hình giao diện
 st.set_page_config(page_title="Data Integration Application", layout="wide")
@@ -22,4 +22,4 @@ elif main_option == "📊 CPC Tools":
 
 elif main_option == "🚀 ASINs Launching":
     st.title("🚀 ASINs Launching Campaign Upload")
-    asin_launching_app()  # 👈 Gọi function giao diện mới
+    asins_launching_app()  # 👈 Gọi function giao diện mới
