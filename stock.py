@@ -58,10 +58,9 @@ def stock_app():
 
                 current_row = len(worksheet.get_all_values()) + 1
 
-                df_to_push = df_filtered.sort_values(by=[
-                    "seller-sku", "fulfillment-channel-sku", "asin",
-                    "Warehouse-Condition-code", "Quantity Available", "Date"
-                ])
+                df_to_push = df_filtered.sort_values(
+                    by="Quantity Available", ascending=False
+                )
                 set_with_dataframe(worksheet, df_to_push, row=current_row, include_column_header=False)
 
                 st.success(f"✅ Đã đẩy dữ liệu lên Google Sheet từ dòng **{current_row}**.")
