@@ -25,6 +25,6 @@ elif main_option == "🚀 ASINs Launching":
     st.title("🚀 ASINs Launching Campaign Upload")
     asins_launching_app()  # 👈 Gọi function giao diện mới
 
-elif main_option == "FBA Inventory":
+elif main_option == "📦 FBA Inventory":
     st.title("📦 Amazon FBA Inventory Review")
     stock_app()  # 👈 Gọi function giao diện mới
