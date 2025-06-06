@@ -14,21 +14,24 @@ def stock_app():
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file, sep="\t", encoding="cp1252")
 
-        # Preview
-        st.subheader("📋 Xem trước 10 dòng đầu tiên:")
-        st.dataframe(df.head(10))
-
-        # Xử lý
+        # ✅ Xử lý dữ liệu
         df_sorted = df.sort_values(by='Quantity Available', ascending=False)
         df_deduped = df_sorted.drop_duplicates(subset='asin', keep='first')
-        df_filtered = df_deduped[(df_deduped['Warehouse-Condition-code'] == 'SELLABLE') & 
-                                 (df_deduped['Quantity Available'] > 0)].copy()
+        df_filtered = df_deduped[
+            (df_deduped['Warehouse-Condition-code'] == 'SELLABLE') &
+            (df_deduped['Quantity Available'] > 0)
+        ].copy()
+
         if 'condition-type' in df_filtered.columns:
             df_filtered.drop(columns=['condition-type'], inplace=True)
 
         df_filtered['Date'] = dt.now().strftime('%Y-%m-%d')
 
-        # ✅ ASIN tồn kho ≥ 50
+        # ✅ Hiển thị preview dữ liệu sau xử lý
+        st.subheader("📋 Dữ liệu tồn kho đã xử lý")
+        st.dataframe(df_filtered)
+
+        # ✅ ASIN tồn kho <= 50
         st.subheader("⚠️ Những ASIN có Quantity Available <= 50")
         high_stock_df = df_filtered[df_filtered['Quantity Available'] <= 50]
         st.dataframe(high_stock_df)
