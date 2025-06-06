@@ -55,7 +55,7 @@ def stock_app():
                 client = gspread.authorize(creds)
 
                 # ✅ Nhập sheet ID và tiến hành ghi
-                sheet_id = st.text_input("🔗 Nhập Google Sheet ID:", "")
+                sheet_id = "18juLU-AmJ8GVnKdGFrBrDT_qxqxcu_aLNK-2LYOsuYk"
                 if sheet_id:
                     worksheet = client.open_by_key(sheet_id).worksheet("DAILY_STOCK")
 
