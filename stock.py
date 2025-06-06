@@ -4,6 +4,7 @@ import io
 from datetime import datetime as dt
 from gspread_dataframe import set_with_dataframe
 import gspread
+import json
 from google.oauth2.service_account import Credentials
 
 def stock_app():
@@ -40,21 +41,34 @@ def stock_app():
 
         # Google Sheets upload
         st.subheader("🔐 2. Upload lên Google Sheets (tùy chọn)")
+
         json_file = st.file_uploader("Upload file credentials JSON", type=["json"])
 
         if json_file is not None:
             try:
-                creds = Credentials.from_service_account_info(
-                    json_file.read(), scopes=["https://www.googleapis.com/auth/spreadsheets"]
-                )
+                # ✅ Đọc file JSON từ bytes -> dict
+                cred_dict = json.load(json_file)
+
+                # ✅ Tạo credentials và client
+                scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+                creds = Credentials.from_service_account_info(cred_dict, scopes=scopes)
                 client = gspread.authorize(creds)
+
+                # ✅ Nhập sheet ID và tiến hành ghi
                 sheet_id = st.text_input("🔗 Nhập Google Sheet ID:", "")
                 if sheet_id:
                     worksheet = client.open_by_key(sheet_id).worksheet("DAILY_STOCK")
-                    set_with_dataframe(worksheet, df_filtered)
-                    st.success("✅ Đã đẩy dữ liệu lên Google Sheet thành công!")
+
+                    # ✅ Tính dòng bắt đầu ghi
+                    current_row = len(worksheet.get_all_values()) + 1
+
+                    # ✅ Sắp xếp và ghi dữ liệu
+                    df_to_push = df_filtered.sort_values(by=["seller-sku", "fulfillment-channel-sku", "asin", "Warehouse-Condition-code", "Quantity Available", "Date"])  # tuỳ bạn điều chỉnh
+                    set_with_dataframe(worksheet, df_to_push, row=current_row, include_column_header=False)
+
+                    st.success(f"✅ Đã đẩy dữ liệu lên Google Sheet từ dòng **{current_row}**.")
             except Exception as e:
-                st.error(f"Lỗi khi kết nối Google Sheets: {e}")
+                st.error(f"❌ Lỗi khi kết nối Google Sheets: {e}")
 
         # 🎯 Lọc theo danh sách ASIN người dùng nhập
         st.subheader("🔍 3. Dán danh sách ASIN cần kiểm tra")
