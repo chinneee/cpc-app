@@ -28,7 +28,7 @@ def stock_app():
         df_filtered['Date'] = dt.now().strftime('%Y-%m-%d')
 
         # ✅ ASIN tồn kho ≥ 50
-        st.subheader("⚠️ Những ASIN có Quantity Available >= 50")
+        st.subheader("⚠️ Những ASIN có Quantity Available <= 50")
         high_stock_df = df_filtered[df_filtered['Quantity Available'] <= 50]
         st.dataframe(high_stock_df)
 
