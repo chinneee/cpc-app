@@ -40,7 +40,7 @@ def stock_app():
         output_high = io.BytesIO()
         with pd.ExcelWriter(output_high, engine="openpyxl") as writer:
             high_stock_df.to_excel(writer, index=False, sheet_name="HighStock")
-        st.download_button("📥 Tải file ASIN sắp hết hàng", data=output_high.getvalue(), file_name="HighStock_ASINs.xlsx")
+        st.download_button("📥 Tải file ASIN sắp hết hàng", data=output_high.getvalue(), file_name="LowStock_ASINs.xlsx")
 
         # Google Sheets upload
         st.subheader("🔐 2. Upload lên Google Sheets (tùy chọn)")

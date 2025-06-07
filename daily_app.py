@@ -51,6 +51,44 @@ def load_full_gsheet_data(sheet_id, credential_json, worksheet_name):
     df['Spend_Ads'] = df['Spend_Ads'].astype(float)
     return df
 
+def volatility_analysis_ui(sheet_id, worksheet_name):
+    st.subheader("📊 Phân tích biến động theo ngày")
+    uploaded_cred = st.file_uploader("🔐 Upload Google Credentials JSON để phân tích", type="json", key="volatility_json")
+
+    if uploaded_cred:
+        try:
+            cred_dict = json.loads(uploaded_cred.read())
+            full_df = load_full_gsheet_data(sheet_id, cred_dict, worksheet_name)
+
+            full_df['Month'] = full_df['Date'].dt.to_period('M')
+            available_months = full_df['Month'].astype(str).sort_values().unique().tolist()
+            selected_month = st.selectbox("📅 Chọn tháng", options=available_months, index=len(available_months) - 1)
+
+            metric = st.selectbox("📌 Chọn tiêu chí biến động", options=["Sessions", "Units_Ordered", "Spend_Ads"])
+
+            month_df = full_df[full_df['Month'].astype(str) == selected_month]
+            month_df = month_df.sort_values(['Child_ASIN', 'Date'])
+
+            month_df['Change_Pct'] = month_df.groupby('Child_ASIN')[metric].pct_change().abs()
+            volatility = month_df.groupby('Child_ASIN')['Change_Pct'].mean().reset_index()
+            top10_asins = volatility.sort_values(by='Change_Pct', ascending=False).head(10)['Child_ASIN'].tolist()
+            top10_df = month_df[month_df['Child_ASIN'].isin(top10_asins)]
+
+            st.markdown(f"### 🔟 Top 10 ASIN có biến động mạnh nhất theo `{metric}` trong tháng {selected_month}")
+            st.dataframe(top10_df[['Child_ASIN', 'Date', metric, 'Change_Pct']])
+
+            chart = alt.Chart(top10_df).mark_line(point=True).encode(
+                x='Date:T',
+                y=alt.Y(f'{metric}:Q', title=metric),
+                color='Child_ASIN:N',
+                tooltip=['Child_ASIN', 'Date', metric]
+            ).properties(title=f'{metric} theo ngày - Top 10 ASIN biến động nhất')
+
+            st.altair_chart(chart, use_container_width=True)
+
+        except Exception as e:
+            st.error(f"❌ Không thể phân tích biến động: {e}")
+
 def daily_tracking_app():
     st.title("📊 Daily Data Merger & GSheet Exporter")
     st.markdown("Upload 2 CSV files: Business Report + Ads Report")
@@ -70,7 +108,7 @@ def daily_tracking_app():
             st.download_button("📥 Download Merged Excel", buffer.getvalue(), file_name="merged_daily_summary.xlsx")
 
             if st.checkbox("📤 Push to Google Sheets"):
-                uploaded_cred = st.file_uploader("🔐 Upload Google Credentials JSON", type="json")
+                uploaded_cred = st.file_uploader("🔐 Upload Google Credentials JSON", type="json", key="push_json")
 
                 if uploaded_cred:
                     cred_dict = json.loads(uploaded_cred.read())
@@ -87,38 +125,13 @@ def daily_tracking_app():
                         set_with_dataframe(worksheet, df_final, row=current_row, include_column_header=False)
                         st.success(f"✅ Data pushed to Google Sheets (start row: {current_row})!")
 
-                        # BẮT ĐẦU PHÂN TÍCH BIẾN ĐỘNG
-                        st.markdown("---")
-                        st.subheader("📈 Phân tích biến động theo ngày trong tháng")
-
-                        full_df = load_full_gsheet_data("18juLU-AmJ8GVnKdGFrBrDT_qxqxcu_aLNK-2LYOsuYk", cred_dict, "DAILY_TH")
-                        full_df['Month'] = full_df['Date'].dt.to_period('M')
-                        available_months = full_df['Month'].astype(str).sort_values().unique().tolist()
-                        selected_month = st.selectbox("📅 Chọn tháng", options=available_months, index=len(available_months) - 1)
-
-                        metric = st.selectbox("📌 Chọn tiêu chí biến động", options=["Sessions", "Units_Ordered", "Spend_Ads"])
-
-                        month_df = full_df[full_df['Month'].astype(str) == selected_month]
-                        month_df = month_df.sort_values(['Child_ASIN', 'Date'])
-
-                        month_df['Change_Pct'] = month_df.groupby('Child_ASIN')[metric].pct_change().abs()
-                        volatility = month_df.groupby('Child_ASIN')['Change_Pct'].mean().reset_index()
-                        top10_asins = volatility.sort_values(by='Change_Pct', ascending=False).head(10)['Child_ASIN'].tolist()
-                        top10_df = month_df[month_df['Child_ASIN'].isin(top10_asins)]
-
-                        st.markdown(f"### 🔟 Top 10 ASIN có biến động mạnh nhất theo `{metric}` trong tháng {selected_month}")
-                        st.dataframe(top10_df[['Child_ASIN', 'Date', metric, 'Change_Pct']])
-
-                        chart = alt.Chart(top10_df).mark_line(point=True).encode(
-                            x='Date:T',
-                            y=alt.Y(f'{metric}:Q', title=metric),
-                            color='Child_ASIN:N',
-                            tooltip=['Child_ASIN', 'Date', metric]
-                        ).properties(title=f'{metric} theo ngày - Top 10 ASIN biến động nhất')
-
-                        st.altair_chart(chart, use_container_width=True)
-
                     except Exception as e:
-                        st.error(f"❌ Could not check or push to Google Sheets: {e}")
+                        st.error(f"❌ Could not push to Google Sheets: {e}")
+
         except Exception as e:
             st.error(f"❌ Error during merging or processing files: {e}")
+
+    # --- Phân tích biến động TÁCH RIÊNG ---
+    st.markdown("---")
+    with st.expander("📊 Phân tích biến động theo tháng", expanded=False):
+        volatility_analysis_ui(sheet_id="18juLU-AmJ8GVnKdGFrBrDT_qxqxcu_aLNK-2LYOsuYk", worksheet_name="DAILY_TH")
