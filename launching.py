@@ -10,7 +10,6 @@ from gspread_dataframe import set_with_dataframe
 from google.oauth2.service_account import Credentials
 
 def extract_keywords():
-    st.set_page_config(layout="wide")
 
     # Step 1: Upload CSV files
     uploaded_files = st.file_uploader("📁 Upload one or more CSV files", type="csv", accept_multiple_files=True)
