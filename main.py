@@ -2,7 +2,7 @@ import streamlit as st
 from daily_app import daily_tracking_app
 from cpc_app import cpc_dashboard_app
 from asins_app import asins_launching_app
-from launching import extract_keywords
+from extract import extract_keywords
 from stock import stock_app 
 
 # Cấu hình giao diện
