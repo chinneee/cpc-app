@@ -1,15 +1,16 @@
 import streamlit as st
 from daily_app import daily_tracking_app
 from cpc_app import cpc_dashboard_app
-from asins_app import asins_launching_app  # 👈 Import mới
-from stock import stock_app  # 👈 Import mới
+from asins_app import asins_launching_app
+from launching import extract_keywords
+from stock import stock_app 
 
 # Cấu hình giao diện
 st.set_page_config(page_title="Data Integration Application", layout="wide")
 
 # Giao diện sidebar
 st.sidebar.title("📌 Công cụ tổng hợp dữ liệu")
-main_option = st.sidebar.radio("Chọn chức năng chính:", ["🗓️ Daily Tracking", "📊 CPC Tools", "🚀 ASINs Launching", "📦 FBA Inventory"])
+main_option = st.sidebar.radio("Chọn chức năng chính:", ["🗓️ Daily Tracking", "📊 CPC Tools", "🚀 ASINs Launching", "📤 Extract Keywords", "📦 FBA Inventory"])
 
 # Xử lý lựa chọn menu
 if main_option == "🗓️ Daily Tracking":
@@ -24,6 +25,10 @@ elif main_option == "📊 CPC Tools":
 elif main_option == "🚀 ASINs Launching":
     st.title("🚀 ASINs Launching Campaign Upload")
     asins_launching_app()  # 👈 Gọi function giao diện mới
+
+elif main_option == "📤 Extract Keywords":
+    st.title("📤 Extract Keywords To Google Sheets")
+    extract_keywords()  # 👈 Gọi function giao diện mới
 
 elif main_option == "📦 FBA Inventory":
     st.title("📦 Amazon FBA Inventory Review")
