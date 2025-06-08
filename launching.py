@@ -9,7 +9,7 @@ from datetime import datetime as dt
 from gspread_dataframe import set_with_dataframe
 from google.oauth2.service_account import Credentials
 
-def extract_keyword():
+def extract_keywords():
     st.set_page_config(layout="wide")
 
     # Step 1: Upload CSV files
