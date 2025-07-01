@@ -159,7 +159,7 @@ def cpc_dashboard_app(mode):
 
     # Menu phụ
     if mode in ["CPC Launching", "CPC Daily"]:
-        df_raw = load_data("LAUNCHING TH" if mode == "CPC Launching" else "HELIUM TH")
+        df_raw = load_data("LAUNCHING TH" if mode == "CPC Launching" else "DAILY TH")
         df_result = preprocess_launching(df_raw) if mode == "CPC Launching" else preprocess_daily(df_raw)
         st.subheader(f"📊 {mode} Data")
         st.dataframe(df_result, use_container_width=True)
@@ -176,7 +176,7 @@ def cpc_dashboard_app(mode):
                     tmp_file_path = tmp_file.name
                 user_creds = Credentials.from_service_account_file(tmp_file_path, scopes=SCOPES)
                 user_client = gspread.authorize(user_creds)
-                sheet_name = "CPC LAUNCHING TH" if mode == "CPC Launching" else "CPC HELIUM"
+                sheet_name = "CPC LAUNCHING TH" if mode == "CPC Launching" else "CPC DAILY TH"
                 sheet = user_client.open_by_key(SHEET_ID).worksheet(sheet_name)
                 set_with_dataframe(sheet, df_result, row=2)
                 st.success("✅ Exported to Google Sheet successfully!")
@@ -186,5 +186,5 @@ def cpc_dashboard_app(mode):
         st.markdown("---")
         if st.checkbox("📐 Estimate CPC Launching 2025"):
             df_launching = preprocess_launching(load_data("LAUNCHING TH"))
-            df_daily = preprocess_daily(load_data("HELIUM TH"))
+            df_daily = preprocess_daily(load_data("DAILY TH"))
             estimate_cpc_launching_2025(df_launching, df_daily)
