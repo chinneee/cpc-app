@@ -132,6 +132,6 @@ def daily_tracking_app():
             st.error(f"❌ Error during merging or processing files: {e}")
 
     # --- Phân tích biến động TÁCH RIÊNG ---
-    # st.markdown("### 📊 Daily Volatility Analysis")
+    st.markdown("---")
     volatility_analysis_ui(sheet_id="18juLU-AmJ8GVnKdGFrBrDT_qxqxcu_aLNK-2LYOsuYk", worksheet_name="DAILY_TH")
 
