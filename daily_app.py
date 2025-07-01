@@ -133,5 +133,5 @@ def daily_tracking_app():
 
     # --- Phân tích biến động TÁCH RIÊNG ---
     st.markdown("---")
-    with st.expander("📊 Phân tích biến động theo tháng", expanded=False):
+    with st.expander("", expanded=False):
         volatility_analysis_ui(sheet_id="18juLU-AmJ8GVnKdGFrBrDT_qxqxcu_aLNK-2LYOsuYk", worksheet_name="DAILY_TH")
