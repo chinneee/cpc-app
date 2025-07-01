@@ -52,8 +52,8 @@ def load_full_gsheet_data(sheet_id, credential_json, worksheet_name):
     return df
 
 def volatility_analysis_ui(sheet_id, worksheet_name):
-    st.subheader("📊 Phân tích biến động theo ngày")
-    uploaded_cred = st.file_uploader("🔐 Upload Google Credentials JSON để phân tích", type="json", key="volatility_json")
+    st.subheader("📊 Daily Volatility Analysis")
+    uploaded_cred = st.file_uploader("🔐 Upload Google Credentials JSON", type="json", key="volatility_json")
 
     if uploaded_cred:
         try:
@@ -62,9 +62,9 @@ def volatility_analysis_ui(sheet_id, worksheet_name):
 
             full_df['Month'] = full_df['Date'].dt.to_period('M')
             available_months = full_df['Month'].astype(str).sort_values().unique().tolist()
-            selected_month = st.selectbox("📅 Chọn tháng", options=available_months, index=len(available_months) - 1)
+            selected_month = st.selectbox("📅 Month", options=available_months, index=len(available_months) - 1)
 
-            metric = st.selectbox("📌 Chọn tiêu chí biến động", options=["Sessions", "Units_Ordered", "Spend_Ads"])
+            metric = st.selectbox("📌 Select Fluctuation Criteria:", options=["Sessions", "Units_Ordered", "Spend_Ads"])
 
             month_df = full_df[full_df['Month'].astype(str) == selected_month]
             month_df = month_df.sort_values(['Child_ASIN', 'Date'])
@@ -74,7 +74,7 @@ def volatility_analysis_ui(sheet_id, worksheet_name):
             top10_asins = volatility.sort_values(by='Change_Pct', ascending=False).head(10)['Child_ASIN'].tolist()
             top10_df = month_df[month_df['Child_ASIN'].isin(top10_asins)]
 
-            st.markdown(f"### 🔟 Top 10 ASIN có biến động mạnh nhất theo `{metric}` trong tháng {selected_month}")
+            st.markdown(f"### 🔟 Top 10 ASINs with the Strongest Movements `{metric}` in {selected_month}")
             st.dataframe(top10_df[['Child_ASIN', 'Date', metric, 'Change_Pct']])
 
             chart = alt.Chart(top10_df).mark_line(point=True).encode(
@@ -82,12 +82,12 @@ def volatility_analysis_ui(sheet_id, worksheet_name):
                 y=alt.Y(f'{metric}:Q', title=metric),
                 color='Child_ASIN:N',
                 tooltip=['Child_ASIN', 'Date', metric]
-            ).properties(title=f'{metric} theo ngày - Top 10 ASIN biến động nhất')
+            ).properties(title=f'{metric} Daily - Top 10 Most Volatile ASINs')
 
             st.altair_chart(chart, use_container_width=True)
 
         except Exception as e:
-            st.error(f"❌ Không thể phân tích biến động: {e}")
+            st.error(f"❌ Unable to analyze volatility: {e}")
 
 def daily_tracking_app():
     st.title("📊 Daily Data Merger & GSheet Exporter")
