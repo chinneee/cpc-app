@@ -1,5 +1,5 @@
 # AGGREGATION TOOL FOR PAY PER CLICK TEAM
-![avt](images/Sample image.png)
+![avt](images/Sample_image.png)
 ## TARGET/ APPLICATION
 Dữ liệu rời rạc trên các báo cáo của Amazon khiến việc quản lý luồng traffic của các ASIN trở nên khó khăn đối với những nhà quản lý bán hàng trên nền tảng. Việc tổng hợp dữ liệu từ những báo cáo sẽ giúp nhà bán có cái nhìn tổng quan về luồng traffic, xem xét ASIN nào biến động nhiều trong tháng? ASIN nào đang có Traffic ngoài đổ vào nhiều? Sự biến động Traffic đó chủ yếu đến từ đâu? Từ đó đưa ra những `actions` phù hợp với từng ASIN cụ thể.
 
